@@ -1,0 +1,12 @@
+import type { KenSpecConfig } from './config.js';
+export declare function getDefaultConfig(): KenSpecConfig;
+export declare function getDefaultConfigYaml(): string;
+export declare function getDefaultReadme(): string;
+export declare function getDefaultRule(): string;
+export declare function getDefaultSkill(): string;
+export declare function getDefaultCommand(): string;
+export declare function getDefaultPostmortemModuleReadme(): string;
+export declare function getDefaultPostmortemModuleSkill(): string;
+export declare function getDefaultPostmortemCaseTemplate(): string;
+export declare function getDefaultPostmortemRetrospectiveTemplate(): string;
+export declare function getDefaultPostmortemIndexTemplate(): string;
