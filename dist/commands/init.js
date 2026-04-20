@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { ensureDir, writeFileIfMissing } from '../fs.js';
-import { getDefaultCommand, getDefaultConfigYaml, getDefaultPostmortemCaseTemplate, getDefaultPostmortemIndexTemplate, getDefaultPostmortemModuleReadme, getDefaultPostmortemModuleSkill, getDefaultPostmortemRetrospectiveTemplate, getDefaultReadme, getDefaultRule, getDefaultSkill, } from '../templates.js';
+import { getDefaultCommand, getDefaultConfigYaml, getDefaultPostmortemCaseTemplate, getDefaultPostmortemIndexTemplate, getDefaultPostmortemModuleReadme, getDefaultPostmortemModuleRules, getDefaultPostmortemModuleSkill, getDefaultPostmortemRetrospectiveTemplate, getDefaultReadme, getDefaultRule, getDefaultSkill, } from '../templates.js';
 export async function initProject(projectRoot) {
     const root = path.join(projectRoot, '.ken_spec');
     await Promise.all([
@@ -19,6 +19,7 @@ export async function initProject(projectRoot) {
         writeFileIfMissing(path.join(root, 'skills', 'project.md'), getDefaultSkill()),
         writeFileIfMissing(path.join(root, 'commands', 'start.md'), getDefaultCommand()),
         writeFileIfMissing(path.join(root, 'modules', 'postmortem', 'README.md'), getDefaultPostmortemModuleReadme()),
+        writeFileIfMissing(path.join(root, 'modules', 'postmortem', 'rules.md'), getDefaultPostmortemModuleRules()),
         writeFileIfMissing(path.join(root, 'modules', 'postmortem', 'skill.md'), getDefaultPostmortemModuleSkill()),
         writeFileIfMissing(path.join(root, 'modules', 'postmortem', 'templates', 'case.md'), getDefaultPostmortemCaseTemplate()),
         writeFileIfMissing(path.join(root, 'modules', 'postmortem', 'templates', 'retrospective.md'), getDefaultPostmortemRetrospectiveTemplate()),

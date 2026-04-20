@@ -32,6 +32,6 @@ describe('syncProject', () => {
 
     expect(agents).toContain('<!-- KEN_SPEC:START -->');
     expect(claude).toContain('<!-- KEN_SPEC:START -->');
-    expect(codexPostmortem).toContain('.ken_spec/data/postmortem/');
+    expect(codexPostmortem).toContain('.ken_spec/modules/postmortem/rules.md');
   });
 });

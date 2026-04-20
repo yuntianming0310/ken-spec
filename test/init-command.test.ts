@@ -17,6 +17,7 @@ describe('initProject', () => {
       '.ken_spec/skills/project.md',
       '.ken_spec/commands/start.md',
       '.ken_spec/modules/postmortem/README.md',
+      '.ken_spec/modules/postmortem/rules.md',
       '.ken_spec/modules/postmortem/skill.md',
       '.ken_spec/modules/postmortem/templates/case.md',
       '.ken_spec/modules/postmortem/templates/retrospective.md',

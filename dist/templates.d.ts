@@ -7,6 +7,7 @@ export declare function getDefaultSkill(): string;
 export declare function getDefaultCommand(): string;
 export declare function getDefaultPostmortemModuleReadme(): string;
 export declare function getDefaultPostmortemModuleSkill(): string;
+export declare function getDefaultPostmortemModuleRules(): string;
 export declare function getDefaultPostmortemCaseTemplate(): string;
 export declare function getDefaultPostmortemRetrospectiveTemplate(): string;
 export declare function getDefaultPostmortemIndexTemplate(): string;

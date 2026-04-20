@@ -16,3 +16,7 @@ Minimal personal AI spec sync tool for Codex and Claude.
 - Syncs built-in module skills from `.ken_spec/modules/*/skill.md`
 - Scaffolds the built-in `postmortem` module and its project-local storage under `.ken_spec/data/postmortem/`
 - Injects a managed Ken Spec block into `AGENTS.md` and `CLAUDE.md`
+
+## Customizing postmortem rules
+
+After `init`, edit `.ken_spec/modules/postmortem/rules.md` to define when to capture, what to record, where to store, and output constraints. The synced skill points agents at that file at runtime, so changes take effect on the next agent session without rerunning `sync`.
