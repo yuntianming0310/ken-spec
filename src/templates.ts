@@ -233,3 +233,149 @@ export function getDefaultPostmortemIndexTemplate(): string {
     '',
   ].join('\n');
 }
+
+export function getDefaultCodeStyleRule(): string {
+  return [
+    '# Code Style Rules',
+    '',
+    'Edit this file to define code-style rules for this project. Agents read it before writing or modifying code.',
+    '',
+    'Each section below is a contract with the agent. Keep bullets concrete — vague rules get ignored.',
+    '',
+    '## Naming',
+    '',
+    '<!-- Identifier casing, abbreviation policy, file-naming rules. -->',
+    '',
+    '- example: use `camelCase` for variables and functions',
+    '',
+    '## Formatting',
+    '',
+    '<!-- Indentation, line length, quote style, trailing commas, etc. -->',
+    '',
+    '- example: 2-space indent, max line length 100',
+    '',
+    '## Type safety',
+    '',
+    '<!-- When to use explicit types, nullability, generics, narrowing. -->',
+    '',
+    '- example: no `any` in production code; prefer `unknown` + narrowing',
+    '',
+    '## Comments',
+    '',
+    '<!-- When comments are required, banned, or must follow a template. -->',
+    '',
+    '- example: document the WHY, not the WHAT',
+    '',
+    '## Imports',
+    '',
+    '<!-- Ordering, grouping, path aliases, side-effect imports. -->',
+    '',
+    '- example: node builtins → third-party → local, separated by blank lines',
+    '',
+    '## Errors',
+    '',
+    '<!-- How errors are thrown, wrapped, logged, and surfaced. -->',
+    '',
+    '- example: never swallow errors silently; attach context when rethrowing',
+    '',
+  ].join('\n');
+}
+
+export function getDefaultProcessRule(): string {
+  return [
+    '# Process Rules',
+    '',
+    'Edit this file to define process rules for this project. Agents read it before preparing a commit, branch, or PR.',
+    '',
+    'Each section below is a contract with the agent. Keep bullets concrete — vague rules get ignored.',
+    '',
+    '## Commit messages',
+    '',
+    '<!-- Format, subject length, body requirements, footer/trailers. -->',
+    '',
+    '- example: Conventional Commits (`type(scope): subject`), subject ≤ 72 chars',
+    '',
+    '## Branches',
+    '',
+    '<!-- Naming convention, base branch, lifetime. -->',
+    '',
+    '- example: `feat/<short-slug>`, branched from `main`',
+    '',
+    '## Pull requests & code review',
+    '',
+    '<!-- Required reviewers, description template, labels. -->',
+    '',
+    '- example: PR description must list Summary, Testing, Risks',
+    '',
+    '## Testing requirements',
+    '',
+    '<!-- What must be tested before a PR is opened. -->',
+    '',
+    '- example: run full test suite locally; new code requires a unit test',
+    '',
+    '## Release',
+    '',
+    '<!-- Tagging, changelog, deployment steps. -->',
+    '',
+    '- example: bump version in `package.json`; tag `vX.Y.Z`; publish via CI',
+    '',
+  ].join('\n');
+}
+
+export function getDefaultStyleReviewModuleReadme(): string {
+  return [
+    '# Style Review Module',
+    '',
+    'Provides the `style-review` skill to Codex and Claude.',
+    '',
+    'Rules live in `.ken_spec/rules/code-style.md` — edit that file to tune what counts as a violation. The skill reads it at runtime, so changes take effect without `ken-spec sync`.',
+    '',
+  ].join('\n');
+}
+
+export function getDefaultStyleReviewSkill(): string {
+  return [
+    '# Code Style Review Skill',
+    '',
+    'Use this when the user asks to review code for style, consistency, or pre-commit cleanup.',
+    '',
+    '## How',
+    '',
+    '1. Read `.ken_spec/rules/code-style.md` — that file is the source of truth.',
+    '2. For each file in scope, walk through the rule sections (Naming, Formatting, Type safety, Comments, Imports, Errors).',
+    '3. Report violations with `file:line` pointers and suggested fixes.',
+    "4. Don't auto-fix unless the user asks.",
+    '',
+    'If `rules/code-style.md` is missing or a section is empty, pause and ask.',
+    '',
+  ].join('\n');
+}
+
+export function getDefaultCommitPrepModuleReadme(): string {
+  return [
+    '# Commit Prep Module',
+    '',
+    'Provides the `commit-prep` skill to Codex and Claude.',
+    '',
+    'Rules live in `.ken_spec/rules/process.md` — edit that file to tune commit/branch/PR expectations. The skill reads it at runtime, so changes take effect without `ken-spec sync`.',
+    '',
+  ].join('\n');
+}
+
+export function getDefaultCommitPrepSkill(): string {
+  return [
+    '# Commit Preparation Skill',
+    '',
+    'Use this when the user asks to prepare a commit, branch name, or PR.',
+    '',
+    '## How',
+    '',
+    '1. Read `.ken_spec/rules/process.md` — that file is the source of truth.',
+    '2. Walk the checklist: commit message format, branch naming, required tests, PR requirements.',
+    '3. Report blockers; stop and ask before committing if anything is unclear.',
+    '4. Never skip git hooks or bypass checks unless the user explicitly confirms.',
+    '',
+    'If `rules/process.md` is missing or a section is empty, pause and ask.',
+    '',
+  ].join('\n');
+}
