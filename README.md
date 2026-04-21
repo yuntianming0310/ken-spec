@@ -5,8 +5,10 @@ Minimal personal AI spec sync tool for Codex and Claude.
 ## Commands
 
 - `npm run build`
-- `node dist/bin.js init`
-- `node dist/bin.js sync`
+- `node dist/bin.js init` — scaffold `.ken_spec/`
+- `node dist/bin.js sync` — sync into `.codex/`, `.claude/`, and managed blocks in `AGENTS.md` / `CLAUDE.md`
+- `node dist/bin.js doctor` — validate state; warns on drift (hand-edited generated `SKILL.md`), missing sync targets, or invalid `config.yaml`. Exits non-zero only on errors.
+- `node dist/bin.js clean [--dry-run]` — remove what `sync` produced (generated skill dirs + managed blocks). The `.ken_spec/` source is left untouched.
 
 ## What it does
 
