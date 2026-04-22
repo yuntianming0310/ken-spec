@@ -66,6 +66,22 @@ describe('runDoctor', () => {
     expect(warnings.some((f) => f.message.includes('code-style.md'))).toBe(true);
   });
 
+  it('emits info findings when a rules section header is missing', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-empty-rules');
+    await initProject(projectRoot);
+
+    await fs.writeFile(
+      path.join(projectRoot, '.ken_spec', 'rules', 'code-style.md'),
+      '# Code Style Rules\n\n(empty)\n',
+      'utf8'
+    );
+
+    const report = await runDoctor(projectRoot);
+    const infos = report.findings.filter((f) => f.severity === 'info');
+    expect(infos.some((f) => f.message.includes('code-style.md') && f.message.includes('Naming'))).toBe(true);
+    expect(infos.some((f) => f.message.includes('code-style.md') && f.message.includes('Errors'))).toBe(true);
+  });
+
   it('flags invalid YAML in config.yaml as an error', async () => {
     const projectRoot = await makeTempProject('ken-spec-doctor-bad-yaml');
     await initProject(projectRoot);

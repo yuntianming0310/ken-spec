@@ -148,6 +148,15 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
       });
       continue;
     }
+    const content = await readTextOrEmpty(rulePath);
+    for (const section of rule.sections) {
+      if (!content.includes(section)) {
+        findings.push({
+          severity: 'info',
+          message: `rules/${rule.file} is missing expected section "${section}"`,
+        });
+      }
+    }
   }
 
   // Postmortem rules.md sanity (only if the module is present).
