@@ -82,6 +82,25 @@ describe('runDoctor', () => {
     expect(infos.some((f) => f.message.includes('code-style.md') && f.message.includes('Errors'))).toBe(true);
   });
 
+  it('warns when the managed block in AGENTS.md is stale vs renderRootManagedBlock()', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-block-drift');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    const agentsPath = path.join(projectRoot, 'AGENTS.md');
+    await fs.writeFile(
+      agentsPath,
+      '<!-- KEN_SPEC:START -->\nstale hand-edited body\n<!-- KEN_SPEC:END -->\n',
+      'utf8'
+    );
+
+    const report = await runDoctor(projectRoot);
+    const warnings = report.findings.filter((f) => f.severity === 'warn');
+    expect(
+      warnings.some((f) => f.message.includes('managed block') && f.message.includes('AGENTS.md'))
+    ).toBe(true);
+  });
+
   it('flags invalid YAML in config.yaml as an error', async () => {
     const projectRoot = await makeTempProject('ken-spec-doctor-bad-yaml');
     await initProject(projectRoot);

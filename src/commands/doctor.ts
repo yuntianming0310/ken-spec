@@ -3,8 +3,8 @@ import { promises as fs } from 'node:fs';
 import { parse } from 'yaml';
 import { loadConfig } from '../config.js';
 import { readTextOrEmpty } from '../fs.js';
-import { START_MARKER } from '../markers.js';
-import { loadSkills, renderSkillFile } from '../render.js';
+import { END_MARKER, START_MARKER } from '../markers.js';
+import { loadSkills, renderRootManagedBlock, renderSkillFile } from '../render.js';
 
 export type DoctorSeverity = 'error' | 'warn' | 'info';
 
@@ -111,13 +111,30 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
     { enabled: config.injectAgentsMd, file: 'AGENTS.md' },
     { enabled: config.injectClaudeMd, file: 'CLAUDE.md' },
   ];
+  const expectedBlock = renderRootManagedBlock();
   for (const check of rootChecks) {
     if (!check.enabled) continue;
-    const content = await readTextOrEmpty(path.join(projectRoot, check.file));
+    const filePath = path.join(projectRoot, check.file);
+    const content = await readTextOrEmpty(filePath);
     if (!content.includes(START_MARKER)) {
       findings.push({
         severity: 'warn',
         message: `${check.file} is missing the Ken Spec managed block — run \`ken-spec sync\``,
+      });
+      continue;
+    }
+    const actualBlock = extractManagedBlock(content);
+    if (actualBlock === undefined) {
+      findings.push({
+        severity: 'warn',
+        message: `${check.file} has a malformed Ken Spec managed block — run \`ken-spec sync\``,
+      });
+      continue;
+    }
+    if (normalize(actualBlock) !== normalize(expectedBlock)) {
+      findings.push({
+        severity: 'warn',
+        message: `${check.file} managed block is stale — run \`ken-spec sync\``,
       });
     }
   }
@@ -196,6 +213,15 @@ export function summarizeReport(report: DoctorReport): string {
 function finalize(findings: DoctorFinding[]): DoctorReport {
   const ok = !findings.some((f) => f.severity === 'error');
   return { findings, ok };
+}
+
+function extractManagedBlock(content: string): string | undefined {
+  const startIndex = content.indexOf(START_MARKER);
+  const endIndex = content.indexOf(END_MARKER);
+  if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+    return undefined;
+  }
+  return content.slice(startIndex, endIndex + END_MARKER.length);
 }
 
 function normalize(content: string): string {
