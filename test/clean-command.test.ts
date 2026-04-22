@@ -25,8 +25,12 @@ describe('cleanProject', () => {
     const targets = [
       '.codex/skills/project/SKILL.md',
       '.codex/skills/postmortem/SKILL.md',
+      '.codex/skills/style-review/SKILL.md',
+      '.codex/skills/commit-prep/SKILL.md',
       '.claude/skills/project/SKILL.md',
       '.claude/skills/postmortem/SKILL.md',
+      '.claude/skills/style-review/SKILL.md',
+      '.claude/skills/commit-prep/SKILL.md',
     ];
     for (const rel of targets) {
       expect(await exists(path.join(projectRoot, rel))).toBe(true);
