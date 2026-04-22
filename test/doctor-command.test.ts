@@ -55,6 +55,17 @@ describe('runDoctor', () => {
     expect(driftFindings.length).toBeGreaterThan(0);
   });
 
+  it('warns when a rules file is missing', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-missing-rules');
+    await initProject(projectRoot);
+
+    await fs.rm(path.join(projectRoot, '.ken_spec', 'rules', 'code-style.md'));
+
+    const report = await runDoctor(projectRoot);
+    const warnings = report.findings.filter((f) => f.severity === 'warn');
+    expect(warnings.some((f) => f.message.includes('code-style.md'))).toBe(true);
+  });
+
   it('flags invalid YAML in config.yaml as an error', async () => {
     const projectRoot = await makeTempProject('ken-spec-doctor-bad-yaml');
     await initProject(projectRoot);

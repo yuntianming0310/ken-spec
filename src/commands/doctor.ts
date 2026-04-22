@@ -122,6 +122,34 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
     }
   }
 
+  // Team-conventions rules files (code-style.md, process.md).
+  const conventionRules: Array<{ file: string; sections: string[] }> = [
+    {
+      file: 'code-style.md',
+      sections: ['Naming', 'Formatting', 'Type safety', 'Comments', 'Imports', 'Errors'],
+    },
+    {
+      file: 'process.md',
+      sections: [
+        'Commit messages',
+        'Branches',
+        'Pull requests & code review',
+        'Testing requirements',
+        'Release',
+      ],
+    },
+  ];
+  for (const rule of conventionRules) {
+    const rulePath = path.join(kenSpecDir, 'rules', rule.file);
+    if (!(await exists(rulePath))) {
+      findings.push({
+        severity: 'warn',
+        message: `rules/${rule.file} is missing — restore it or run \`ken-spec init\` in an empty subdir to regenerate`,
+      });
+      continue;
+    }
+  }
+
   // Postmortem rules.md sanity (only if the module is present).
   const rulesPath = path.join(
     kenSpecDir,
