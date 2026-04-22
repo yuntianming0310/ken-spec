@@ -30,14 +30,25 @@ export function renderSkillFile(skill: SkillSource): string {
 
 export function renderRootManagedBlock(): string {
   return renderManagedBlock([
-    'This project uses Ken Spec.',
+    'This project uses Ken Spec. Rules below are binding for all work in this repo.',
     '',
-    'Primary source of truth:',
-    '- `.ken_spec/README.md`',
-    '- `.ken_spec/rules/`',
-    '- `.ken_spec/skills/`',
+    '## Mandatory reads',
     '',
-    'Consult these files before planning or implementation when relevant.',
+    'Before writing or modifying code, read:',
+    '- `.ken_spec/rules/code-style.md`',
+    '',
+    'Before preparing a commit, branch, or PR, read:',
+    '- `.ken_spec/rules/process.md`',
+    '',
+    'General project rules:',
+    '- `.ken_spec/rules/global.md`',
+    '',
+    'If a rule conflicts with the current task, pause and ask the user.',
+    '',
+    '## Reference',
+    '- `.ken_spec/README.md` — project overview',
+    '- `.ken_spec/rules/` — full rules directory',
+    '- `.ken_spec/modules/` — structured skill modules (postmortem, style-review, commit-prep, …)',
   ].join('\n'));
 }
 
