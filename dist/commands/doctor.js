@@ -3,8 +3,8 @@ import { promises as fs } from 'node:fs';
 import { parse } from 'yaml';
 import { loadConfig } from '../config.js';
 import { readTextOrEmpty } from '../fs.js';
-import { START_MARKER } from '../markers.js';
-import { loadSkills, renderSkillFile } from '../render.js';
+import { END_MARKER, START_MARKER } from '../markers.js';
+import { loadSkills, renderRootManagedBlock, renderSkillFile } from '../render.js';
 export async function runDoctor(projectRoot) {
     const findings = [];
     const kenSpecDir = path.join(projectRoot, '.ken_spec');
@@ -87,15 +87,68 @@ export async function runDoctor(projectRoot) {
         { enabled: config.injectAgentsMd, file: 'AGENTS.md' },
         { enabled: config.injectClaudeMd, file: 'CLAUDE.md' },
     ];
+    const expectedBlock = renderRootManagedBlock();
     for (const check of rootChecks) {
         if (!check.enabled)
             continue;
-        const content = await readTextOrEmpty(path.join(projectRoot, check.file));
+        const filePath = path.join(projectRoot, check.file);
+        const content = await readTextOrEmpty(filePath);
         if (!content.includes(START_MARKER)) {
             findings.push({
                 severity: 'warn',
                 message: `${check.file} is missing the Ken Spec managed block — run \`ken-spec sync\``,
             });
+            continue;
+        }
+        const actualBlock = extractManagedBlock(content);
+        if (actualBlock === undefined) {
+            findings.push({
+                severity: 'warn',
+                message: `${check.file} has a malformed Ken Spec managed block — run \`ken-spec sync\``,
+            });
+            continue;
+        }
+        if (normalize(actualBlock) !== normalize(expectedBlock)) {
+            findings.push({
+                severity: 'warn',
+                message: `${check.file} managed block is stale — run \`ken-spec sync\``,
+            });
+        }
+    }
+    // Team-conventions rules files (code-style.md, process.md).
+    const conventionRules = [
+        {
+            file: 'code-style.md',
+            sections: ['Naming', 'Formatting', 'Type safety', 'Comments', 'Imports', 'Errors'],
+        },
+        {
+            file: 'process.md',
+            sections: [
+                'Commit messages',
+                'Branches',
+                'Pull requests & code review',
+                'Testing requirements',
+                'Release',
+            ],
+        },
+    ];
+    for (const rule of conventionRules) {
+        const rulePath = path.join(kenSpecDir, 'rules', rule.file);
+        if (!(await exists(rulePath))) {
+            findings.push({
+                severity: 'warn',
+                message: `rules/${rule.file} is missing — restore it or run \`ken-spec init\` in an empty subdir to regenerate`,
+            });
+            continue;
+        }
+        const content = await readTextOrEmpty(rulePath);
+        for (const section of rule.sections) {
+            if (!content.includes(section)) {
+                findings.push({
+                    severity: 'info',
+                    message: `rules/${rule.file} is missing expected section "${section}"`,
+                });
+            }
         }
     }
     // Postmortem rules.md sanity (only if the module is present).
@@ -128,6 +181,14 @@ export function summarizeReport(report) {
 function finalize(findings) {
     const ok = !findings.some((f) => f.severity === 'error');
     return { findings, ok };
+}
+function extractManagedBlock(content) {
+    const startIndex = content.indexOf(START_MARKER);
+    const endIndex = content.indexOf(END_MARKER);
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        return undefined;
+    }
+    return content.slice(startIndex, endIndex + END_MARKER.length);
 }
 function normalize(content) {
     return content.replace(/\r\n/g, '\n').trim();
