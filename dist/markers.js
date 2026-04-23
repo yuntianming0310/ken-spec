@@ -13,6 +13,30 @@ export function updateManagedBlock(content, block) {
     }
     return joinSections(content.trimEnd(), block, '');
 }
+/**
+ * Removes the managed block (including its START/END markers) from content.
+ * Preserves any surrounding user content. Returns an empty string if the
+ * block was the only content in the file.
+ */
+export function removeManagedBlock(content) {
+    const startIndex = content.indexOf(START_MARKER);
+    const endIndex = content.indexOf(END_MARKER);
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        return content;
+    }
+    const before = content.slice(0, startIndex).trimEnd();
+    const after = content.slice(endIndex + END_MARKER.length).trimStart();
+    if (!before && !after) {
+        return '';
+    }
+    if (!before) {
+        return `${after}\n`;
+    }
+    if (!after) {
+        return `${before}\n`;
+    }
+    return `${before}\n\n${after}\n`;
+}
 function joinSections(before, middle, after) {
     const sections = [before, middle, after].filter((section) => section.length > 0);
     return `${sections.join('\n\n')}\n`;

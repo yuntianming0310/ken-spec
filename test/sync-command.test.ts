@@ -15,8 +15,12 @@ describe('syncProject', () => {
     const skillPaths = [
       '.codex/skills/project/SKILL.md',
       '.codex/skills/postmortem/SKILL.md',
+      '.codex/skills/style-review/SKILL.md',
+      '.codex/skills/commit-prep/SKILL.md',
       '.claude/skills/project/SKILL.md',
       '.claude/skills/postmortem/SKILL.md',
+      '.claude/skills/style-review/SKILL.md',
+      '.claude/skills/commit-prep/SKILL.md',
       'AGENTS.md',
       'CLAUDE.md',
     ];
@@ -29,9 +33,19 @@ describe('syncProject', () => {
     const agents = await readFile(path.join(projectRoot, 'AGENTS.md'));
     const claude = await readFile(path.join(projectRoot, 'CLAUDE.md'));
     const codexPostmortem = await readFile(path.join(projectRoot, '.codex/skills/postmortem/SKILL.md'));
+    const codexStyleReview = await readFile(path.join(projectRoot, '.codex/skills/style-review/SKILL.md'));
+    const codexCommitPrep = await readFile(path.join(projectRoot, '.codex/skills/commit-prep/SKILL.md'));
 
     expect(agents).toContain('<!-- KEN_SPEC:START -->');
+    expect(agents).toContain('Mandatory reads');
+    expect(agents).toContain('.ken_spec/rules/code-style.md');
+    expect(agents).toContain('.ken_spec/rules/process.md');
     expect(claude).toContain('<!-- KEN_SPEC:START -->');
-    expect(codexPostmortem).toContain('.ken_spec/data/postmortem/');
+    expect(claude).toContain('Mandatory reads');
+    expect(claude).toContain('.ken_spec/rules/code-style.md');
+    expect(claude).toContain('.ken_spec/rules/process.md');
+    expect(codexPostmortem).toContain('.ken_spec/modules/postmortem/rules.md');
+    expect(codexStyleReview).toContain('.ken_spec/rules/code-style.md');
+    expect(codexCommitPrep).toContain('.ken_spec/rules/process.md');
   });
 });
