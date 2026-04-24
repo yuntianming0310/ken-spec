@@ -106,3 +106,49 @@ describe('syncProject — ralph-loop asset mirroring', () => {
     expect(generatorPathFirst).toBe(generatorPathSecond);
   });
 });
+
+describe('initProject — ralph-loop scaffolding', () => {
+  it('creates all ralph-loop source files', async () => {
+    const projectRoot = await makeTempProject('ken-spec-init-ralph');
+    await initProject(projectRoot);
+
+    const expectedPaths = [
+      '.ken_spec/modules/ralph-loop/README.md',
+      '.ken_spec/modules/ralph-loop/skill.md',
+      '.ken_spec/modules/ralph-loop/prompts/generator.md',
+      '.ken_spec/modules/ralph-loop/prompts/evaluator.md',
+      '.ken_spec/modules/ralph-loop/prompts/assembler.md',
+      '.ken_spec/modules/ralph-loop/rubrics/README.md',
+      '.ken_spec/modules/ralph-loop/rubrics/one-pager.yaml',
+      '.ken_spec/modules/ralph-loop/rubrics/assembly.yaml',
+      '.ken_spec/modules/ralph-loop/references/host-profiles.md',
+      '.ken_spec/modules/ralph-loop/references/decomposition-heuristics.md',
+      '.ken_spec/modules/ralph-loop/references/iteration-log-schema.md',
+      '.ken_spec/modules/ralph-loop/templates/task-spec.md',
+      '.ken_spec/modules/ralph-loop/templates/run-dir-readme.md',
+      '.ken_spec/data/ralph-loop/runs/.gitkeep',
+    ];
+
+    for (const relativePath of expectedPaths) {
+      const targetPath = path.join(projectRoot, relativePath);
+      await expect(fs.access(targetPath)).resolves.toBeUndefined();
+    }
+  });
+
+  it('scaffolded skill.md and prompt files are non-empty', async () => {
+    const projectRoot = await makeTempProject('ken-spec-init-ralph-nonempty');
+    await initProject(projectRoot);
+
+    const filesToCheck = [
+      '.ken_spec/modules/ralph-loop/skill.md',
+      '.ken_spec/modules/ralph-loop/prompts/generator.md',
+      '.ken_spec/modules/ralph-loop/prompts/evaluator.md',
+      '.ken_spec/modules/ralph-loop/prompts/assembler.md',
+    ];
+
+    for (const relativePath of filesToCheck) {
+      const content = await fs.readFile(path.join(projectRoot, relativePath), 'utf8');
+      expect(content.trim().length).toBeGreaterThan(0);
+    }
+  });
+});
