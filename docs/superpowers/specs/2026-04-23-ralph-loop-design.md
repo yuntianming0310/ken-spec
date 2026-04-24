@@ -351,7 +351,7 @@ Add a new helper `mirrorModuleAssets(moduleSrcDir, moduleDstDir, assetDirs)`:
 - Behavior: for each whitelisted asset subdir present at source, remove the corresponding subdir at destination, then recursively copy from source
 - Excluded paths: `data/` and the module's `README.md` (the README stays in `.ken_spec/modules/<name>/` only)
 - Hardcoded whitelist: `['prompts', 'rubrics', 'references', 'templates']`
-- Called for every module during sync; no-ops for modules that have no asset subdirs (postmortem, style-review, commit-prep in their current shape)
+- Called for every module during sync. The helper iterates the whitelist and only acts on subdirs that exist in the source, so a module with none of those subdirs is effectively a no-op. In the current module lineup: style-review and commit-prep have no whitelist subdirs (no-op); postmortem has `templates/` (which houses user-facing case / retrospective / index templates), and that subdir gets mirrored alongside the synced SKILL.md — this is intentional and useful
 
 Integration point: inside `syncSkillsToTool`, after `writeText(targetPath, renderSkillFile(skill))`, also invoke `mirrorModuleAssets` when the skill originates from a module directory.
 
@@ -366,7 +366,7 @@ Expose the module source directory alongside the skill content so that sync can 
 ### Unchanged
 
 - `src/config.ts` and `config.yaml` structure. No new config keys.
-- Behavior for postmortem, style-review, commit-prep. `mirrorModuleAssets` is a no-op on them because they have no asset subdirs.
+- Behavior for style-review and commit-prep: `mirrorModuleAssets` is a no-op on them because they have no whitelist subdirs. Postmortem's `templates/` directory gets mirrored to `.claude/skills/postmortem/templates/` and `.codex/skills/postmortem/templates/` — this is an intentional side-effect of the presence-based mirroring rule, not a regression.
 - `AGENTS.md` / `CLAUDE.md` managed block content.
 
 ## Testing Strategy
@@ -391,9 +391,10 @@ New test file: `test/ralph-loop.test.ts`.
    - Running `sync` twice produces identical output
    - A stray file manually added to `.claude/skills/ralph-loop/prompts/` is removed by the next `sync` (proves the clean-then-copy behavior)
 
-4. **`sync` does not regress existing modules**
+4. **`sync` behavior on existing modules**
    - postmortem, style-review, commit-prep still have their SKILL.md written correctly
-   - Their target skill dirs do **not** gain asset subdirs
+   - style-review and commit-prep target skill dirs do **not** gain any whitelist subdir
+   - postmortem's target skill dirs **do** gain a mirrored `templates/` (case / retrospective / index template files), which is intentional — the user-facing templates are useful alongside the skill
 
 5. **`doctor` detects missing assets**
    - Clean `init + sync` → `doctor` passes

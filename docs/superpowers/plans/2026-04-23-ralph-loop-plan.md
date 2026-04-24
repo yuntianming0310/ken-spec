@@ -861,7 +861,7 @@ git commit -m "feat(render): expose sourceDir on SkillSource for module-origin s
 **Files:**
 - Modify: `src/commands/sync.ts`
 
-`mirrorModuleAssets` is a new helper called per-module during sync. It clean-then-copies four whitelisted subdirs (`prompts`, `rubrics`, `references`, `templates`) from the module source to each tool's skill output directory. It no-ops on modules that have none of those subdirs (postmortem, style-review, commit-prep stay unaffected).
+`mirrorModuleAssets` is a new helper called per-module during sync. It clean-then-copies whitelisted subdirs (`prompts`, `rubrics`, `references`, `templates`) from the module source to each tool's skill output directory. The rule is presence-based: a subdir is mirrored iff it exists at the source. In the current module lineup: style-review and commit-prep have no whitelist subdirs (no-op); postmortem has `templates/` (which gets mirrored — intentional, the case/retrospective/index templates are useful alongside the skill).
 
 Depends on Task 2 (needs `sourceDir` on `SkillSource`).
 
@@ -917,17 +917,28 @@ describe('syncProject — ralph-loop asset mirroring', () => {
     await expect(fs.access(strayPath)).rejects.toThrow();
   });
 
-  it('does not add asset subdirs to modules that have none (postmortem, style-review, commit-prep)', async () => {
+  it('mirrors whitelist subdirs only when present in source (postmortem gets templates; style-review and commit-prep stay bare)', async () => {
     const projectRoot = await makeTempProject('ken-spec-sync-noop');
     await initProject(projectRoot);
     await syncProject(projectRoot);
 
-    for (const moduleName of ['postmortem', 'style-review', 'commit-prep']) {
+    // style-review and commit-prep have no whitelist subdirs in source → none at destination.
+    for (const moduleName of ['style-review', 'commit-prep']) {
       for (const tool of ['.claude', '.codex']) {
         for (const assetDir of ['prompts', 'rubrics', 'references', 'templates']) {
           const dirPath = path.join(projectRoot, tool, 'skills', moduleName, assetDir);
           await expect(fs.access(dirPath)).rejects.toThrow();
         }
+      }
+    }
+
+    // postmortem has templates/ in source → templates/ mirrored; no prompts/rubrics/references.
+    for (const tool of ['.claude', '.codex']) {
+      const templatesPath = path.join(projectRoot, tool, 'skills', 'postmortem', 'templates');
+      await expect(fs.access(templatesPath)).resolves.toBeUndefined();
+      for (const assetDir of ['prompts', 'rubrics', 'references']) {
+        const dirPath = path.join(projectRoot, tool, 'skills', 'postmortem', assetDir);
+        await expect(fs.access(dirPath)).rejects.toThrow();
       }
     }
   });

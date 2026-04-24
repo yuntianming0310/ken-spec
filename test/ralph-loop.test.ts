@@ -71,17 +71,28 @@ describe('syncProject — ralph-loop asset mirroring', () => {
     await expect(fs.access(strayPath)).rejects.toThrow();
   });
 
-  it('does not add asset subdirs to modules that have none (postmortem, style-review, commit-prep)', async () => {
+  it('mirrors whitelist subdirs only when present in source (postmortem gets templates; style-review and commit-prep stay bare)', async () => {
     const projectRoot = await makeTempProject('ken-spec-sync-noop');
     await initProject(projectRoot);
     await syncProject(projectRoot);
 
-    for (const moduleName of ['postmortem', 'style-review', 'commit-prep']) {
+    // style-review and commit-prep have no whitelist subdirs in source → none at destination.
+    for (const moduleName of ['style-review', 'commit-prep']) {
       for (const tool of ['.claude', '.codex']) {
         for (const assetDir of ['prompts', 'rubrics', 'references', 'templates']) {
           const dirPath = path.join(projectRoot, tool, 'skills', moduleName, assetDir);
           await expect(fs.access(dirPath)).rejects.toThrow();
         }
+      }
+    }
+
+    // postmortem has templates/ in source → templates/ mirrored; no prompts/rubrics/references.
+    for (const tool of ['.claude', '.codex']) {
+      const templatesPath = path.join(projectRoot, tool, 'skills', 'postmortem', 'templates');
+      await expect(fs.access(templatesPath)).resolves.toBeUndefined();
+      for (const assetDir of ['prompts', 'rubrics', 'references']) {
+        const dirPath = path.join(projectRoot, tool, 'skills', 'postmortem', assetDir);
+        await expect(fs.access(dirPath)).rejects.toThrow();
       }
     }
   });
