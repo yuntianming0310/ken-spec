@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'yaml';
 import { makeTempProject } from './helpers.js';
 import { initProject } from '../src/commands/init.js';
 import { loadSkills } from '../src/render.js';
@@ -215,5 +216,62 @@ describe('runDoctor — ralph-loop asset checks', () => {
         (f) => f.message.includes('ralph-loop') && f.message.includes('rubrics')
       )
     ).toBe(true);
+  });
+});
+
+describe('built-in rubric YAML validity', () => {
+  async function loadRubric(projectRoot: string, name: string): Promise<Record<string, unknown>> {
+    const content = await fs.readFile(
+      path.join(projectRoot, '.ken_spec', 'modules', 'ralph-loop', 'rubrics', `${name}.yaml`),
+      'utf8'
+    );
+    return parse(content) as Record<string, unknown>;
+  }
+
+  function validateRubric(rubric: Record<string, unknown>, rubricName: string): void {
+    expect(rubric.threshold, `${rubricName}: threshold`).toBeTypeOf('number');
+    expect((rubric.threshold as number) > 0, `${rubricName}: threshold > 0`).toBe(true);
+
+    expect(rubric.max_rounds, `${rubricName}: max_rounds`).toBeTypeOf('number');
+    expect((rubric.max_rounds as number) > 0, `${rubricName}: max_rounds > 0`).toBe(true);
+
+    const earlyStop = rubric.early_stop as Record<string, unknown>;
+    expect(earlyStop?.no_improve_rounds, `${rubricName}: no_improve_rounds`).toBeTypeOf('number');
+    expect((earlyStop.no_improve_rounds as number) > 0, `${rubricName}: no_improve_rounds > 0`).toBe(true);
+
+    const criteria = rubric.criteria as Array<Record<string, unknown>>;
+    expect(criteria.length, `${rubricName}: at least one criterion`).toBeGreaterThan(0);
+
+    const personas = rubric.personas as Record<string, unknown>;
+    expect(personas, `${rubricName}: personas must exist`).toBeDefined();
+
+    let weightSum = 0;
+    for (const criterion of criteria) {
+      const evaluatorKey = criterion.evaluator as string;
+      expect(
+        personas[evaluatorKey],
+        `${rubricName}: criterion ${criterion.id as string} evaluator "${evaluatorKey}" must exist in personas`
+      ).toBeDefined();
+      weightSum += criterion.weight as number;
+    }
+
+    expect(
+      Math.abs(weightSum - 1.0) <= 0.01,
+      `${rubricName}: weights must sum to 1.0 ± 0.01 (got ${weightSum})`
+    ).toBe(true);
+  }
+
+  it('one-pager.yaml passes all validation rules', async () => {
+    const projectRoot = await makeTempProject('ken-spec-rubric-one-pager');
+    await initProject(projectRoot);
+    const rubric = await loadRubric(projectRoot, 'one-pager');
+    validateRubric(rubric, 'one-pager');
+  });
+
+  it('assembly.yaml passes all validation rules', async () => {
+    const projectRoot = await makeTempProject('ken-spec-rubric-assembly');
+    await initProject(projectRoot);
+    const rubric = await loadRubric(projectRoot, 'assembly');
+    validateRubric(rubric, 'assembly');
   });
 });
