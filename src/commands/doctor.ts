@@ -201,6 +201,37 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
     }
   }
 
+  // Ralph Loop: verify asset subdirs are present and non-empty in each tool's skill dir.
+  const ralphAssetDirs = ['prompts', 'rubrics', 'references', 'templates'] as const;
+  for (const target of targets) {
+    if (!target.enabled) continue;
+    for (const assetDir of ralphAssetDirs) {
+      const dirPath = path.join(
+        projectRoot,
+        target.toolDir,
+        'skills',
+        'ralph-loop',
+        assetDir
+      );
+      let entries: string[] = [];
+      try {
+        entries = await fs.readdir(dirPath);
+      } catch {
+        findings.push({
+          severity: 'warn',
+          message: `ralph-loop asset subdir missing in ${target.label}: ${assetDir}/ — run \`ken-spec sync\``,
+        });
+        continue;
+      }
+      if (entries.length === 0) {
+        findings.push({
+          severity: 'warn',
+          message: `ralph-loop asset subdir is empty in ${target.label}: ${assetDir}/ — run \`ken-spec sync\``,
+        });
+      }
+    }
+  }
+
   return finalize(findings);
 }
 

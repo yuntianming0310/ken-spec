@@ -5,6 +5,7 @@ import { makeTempProject } from './helpers.js';
 import { initProject } from '../src/commands/init.js';
 import { loadSkills } from '../src/render.js';
 import { syncProject } from '../src/commands/sync.js';
+import { runDoctor } from '../src/commands/doctor.js';
 
 describe('loadSkills — sourceDir field', () => {
   it('sets sourceDir for module-origin skills and leaves it undefined for top-level skills', async () => {
@@ -161,5 +162,58 @@ describe('initProject — ralph-loop scaffolding', () => {
       const content = await fs.readFile(path.join(projectRoot, relativePath), 'utf8');
       expect(content.trim().length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('runDoctor — ralph-loop asset checks', () => {
+  it('passes after clean init + sync', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-ralph-clean');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    const report = await runDoctor(projectRoot);
+    const ralphWarnings = report.findings.filter(
+      (f) => f.severity === 'warn' && f.message.includes('ralph-loop')
+    );
+    expect(ralphWarnings).toHaveLength(0);
+  });
+
+  it('warns when a ralph-loop asset subdir is missing from claude skills', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-ralph-missing');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    // Manually delete the prompts subdir from the claude skills output
+    await fs.rm(
+      path.join(projectRoot, '.claude', 'skills', 'ralph-loop', 'prompts'),
+      { recursive: true, force: true }
+    );
+
+    const report = await runDoctor(projectRoot);
+    const warnings = report.findings.filter((f) => f.severity === 'warn');
+    expect(
+      warnings.some(
+        (f) => f.message.includes('ralph-loop') && f.message.includes('prompts')
+      )
+    ).toBe(true);
+  });
+
+  it('warns when a ralph-loop asset subdir exists but is empty', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-ralph-empty');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    // Empty the rubrics subdir in codex skills
+    const rubricsDir = path.join(projectRoot, '.codex', 'skills', 'ralph-loop', 'rubrics');
+    const entries = await fs.readdir(rubricsDir);
+    await Promise.all(entries.map((e) => fs.rm(path.join(rubricsDir, e))));
+
+    const report = await runDoctor(projectRoot);
+    const warnings = report.findings.filter((f) => f.severity === 'warn');
+    expect(
+      warnings.some(
+        (f) => f.message.includes('ralph-loop') && f.message.includes('rubrics')
+      )
+    ).toBe(true);
   });
 });
