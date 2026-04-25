@@ -6,6 +6,8 @@ import { renderManagedBlock } from './markers.js';
 export interface SkillSource {
   name: string;
   content: string;
+  /** Absolute path to the module directory. Defined only for module-origin skills. */
+  sourceDir?: string;
 }
 
 export async function loadSkills(projectRoot: string): Promise<SkillSource[]> {
@@ -76,6 +78,7 @@ async function loadModuleSkills(modulesDir: string): Promise<SkillSource[]> {
       skills.push({
         name: moduleDir.name,
         content,
+        sourceDir: path.join(modulesDir, moduleDir.name),
       });
     } catch (error) {
       const nodeError = error as NodeJS.ErrnoException;
