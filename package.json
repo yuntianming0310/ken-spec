@@ -1,6 +1,6 @@
 {
   "name": "ken-spec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Minimal personal AI spec sync tool for Codex and Claude",
   "type": "module",
   "bin": {

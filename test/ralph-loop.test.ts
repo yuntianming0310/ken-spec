@@ -118,6 +118,34 @@ describe('syncProject — ralph-loop asset mirroring', () => {
 
     expect(generatorPathFirst).toBe(generatorPathSecond);
   });
+
+  it('mirrors generic adapter reference and code rubric files to both tool dirs', async () => {
+    const projectRoot = await makeTempProject('ken-spec-sync-generic-assets');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    for (const tool of ['.claude', '.codex']) {
+      const adapterPath = path.join(
+        projectRoot,
+        tool,
+        'skills',
+        'ralph-loop',
+        'references',
+        'artifact-adapters.md'
+      );
+      const codeRubricPath = path.join(
+        projectRoot,
+        tool,
+        'skills',
+        'ralph-loop',
+        'rubrics',
+        'code-implementation.yaml'
+      );
+
+      await expect(fs.access(adapterPath)).resolves.toBeUndefined();
+      await expect(fs.access(codeRubricPath)).resolves.toBeUndefined();
+    }
+  });
 });
 
 describe('initProject — ralph-loop scaffolding', () => {
@@ -134,9 +162,11 @@ describe('initProject — ralph-loop scaffolding', () => {
       '.ken_spec/modules/ralph-loop/rubrics/README.md',
       '.ken_spec/modules/ralph-loop/rubrics/one-pager.yaml',
       '.ken_spec/modules/ralph-loop/rubrics/assembly.yaml',
+      '.ken_spec/modules/ralph-loop/rubrics/code-implementation.yaml',
       '.ken_spec/modules/ralph-loop/references/host-profiles.md',
       '.ken_spec/modules/ralph-loop/references/decomposition-heuristics.md',
       '.ken_spec/modules/ralph-loop/references/iteration-log-schema.md',
+      '.ken_spec/modules/ralph-loop/references/artifact-adapters.md',
       '.ken_spec/modules/ralph-loop/templates/task-spec.md',
       '.ken_spec/modules/ralph-loop/templates/run-dir-readme.md',
       '.ken_spec/data/ralph-loop/runs/.gitkeep',
@@ -163,6 +193,24 @@ describe('initProject — ralph-loop scaffolding', () => {
       const content = await fs.readFile(path.join(projectRoot, relativePath), 'utf8');
       expect(content.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it('describes Ralph Loop as a generic artifact workflow with code support', async () => {
+    const projectRoot = await makeTempProject('ken-spec-init-ralph-generic-skill');
+    await initProject(projectRoot);
+
+    const content = await fs.readFile(
+      path.join(projectRoot, '.ken_spec', 'modules', 'ralph-loop', 'skill.md'),
+      'utf8'
+    );
+
+    expect(content).toContain('generic artifact refinement workflow');
+    expect(content).toContain('code implementation');
+    expect(content).toContain('refactor');
+    expect(content).toContain('design-to-code');
+    expect(content).toContain('plan/patch mode');
+    expect(content).toContain('direct implementation mode');
+    expect(content).not.toContain('Use this skill when the user asks to generate, refine, or improve a long-form structured document');
   });
 });
 
@@ -214,6 +262,31 @@ describe('runDoctor — ralph-loop asset checks', () => {
     expect(
       warnings.some(
         (f) => f.message.includes('ralph-loop') && f.message.includes('rubrics')
+      )
+    ).toBe(true);
+  });
+
+  it('warns when a required ralph-loop generic asset file is missing', async () => {
+    const projectRoot = await makeTempProject('ken-spec-doctor-ralph-required-file');
+    await initProject(projectRoot);
+    await syncProject(projectRoot);
+
+    await fs.rm(
+      path.join(
+        projectRoot,
+        '.claude',
+        'skills',
+        'ralph-loop',
+        'references',
+        'artifact-adapters.md'
+      )
+    );
+
+    const report = await runDoctor(projectRoot);
+    const warnings = report.findings.filter((f) => f.severity === 'warn');
+    expect(
+      warnings.some(
+        (f) => f.message.includes('ralph-loop') && f.message.includes('artifact-adapters.md')
       )
     ).toBe(true);
   });
@@ -273,5 +346,12 @@ describe('built-in rubric YAML validity', () => {
     await initProject(projectRoot);
     const rubric = await loadRubric(projectRoot, 'assembly');
     validateRubric(rubric, 'assembly');
+  });
+
+  it('code-implementation.yaml passes all validation rules', async () => {
+    const projectRoot = await makeTempProject('ken-spec-rubric-code-implementation');
+    await initProject(projectRoot);
+    const rubric = await loadRubric(projectRoot, 'code-implementation');
+    validateRubric(rubric, 'code-implementation');
   });
 });

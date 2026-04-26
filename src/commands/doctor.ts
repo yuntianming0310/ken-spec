@@ -203,6 +203,10 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
 
   // Ralph Loop: verify asset subdirs are present and non-empty in each tool's skill dir.
   const ralphAssetDirs = ['prompts', 'rubrics', 'references', 'templates'] as const;
+  const ralphRequiredAssetFiles = [
+    path.join('references', 'artifact-adapters.md'),
+    path.join('rubrics', 'code-implementation.yaml'),
+  ];
   for (const target of targets) {
     if (!target.enabled) continue;
     for (const assetDir of ralphAssetDirs) {
@@ -227,6 +231,21 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
         findings.push({
           severity: 'warn',
           message: `ralph-loop asset subdir is empty in ${target.label}: ${assetDir}/ — run \`ken-spec sync\``,
+        });
+      }
+    }
+    for (const assetFile of ralphRequiredAssetFiles) {
+      const filePath = path.join(
+        projectRoot,
+        target.toolDir,
+        'skills',
+        'ralph-loop',
+        assetFile
+      );
+      if (!(await exists(filePath))) {
+        findings.push({
+          severity: 'warn',
+          message: `ralph-loop required asset missing in ${target.label}: ${assetFile} — run \`ken-spec sync\``,
         });
       }
     }
